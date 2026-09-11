@@ -1,4 +1,4 @@
-# Global Keyword Research Engine
+# Keyword Research Engine
 
 A lightweight, automated multi-language keyword research tool. It uses Google Gemini models for linguistic localization across 10 global markets and verifies live search volume and organic competition using real-time search engine demand signals.
 
