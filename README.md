@@ -31,6 +31,7 @@ touch .env
 Add your Gemini API key and desired port to the .env file:
 
 GEMINI_API_KEY=your_gemini_api_key_here
+
 PORT=3000
 
 Note: Never commit your .env file to GitHub. Ensure .env is listed in your .gitignore file.
