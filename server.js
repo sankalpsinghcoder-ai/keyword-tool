@@ -36,7 +36,7 @@ const TARGET_COUNTRIES = {
   "Vietnam": { gl: "vn", hl: "vi", lang: "Vietnamese" }
 };
 
-// Check query saturation directly against Google Autocomplete
+// Check query difficulty using Google Autocomplete
 async function getVerifiedGoogleMetrics(query, gl, hl) {
   const url = `https://suggestqueries.google.com/complete/search?client=chrome&q=${encodeURIComponent(query)}&gl=${gl}&hl=${hl}`;
   try {
@@ -114,7 +114,7 @@ Return strictly raw JSON in this exact structure:
     return res.status(503).json({ error: 'Failed to generate keyword data. Please try again.' });
   }
 
-  // Handle both array and object responses from Gemini safely
+  // Handle both array and object responses from Gemini
   const countriesEntries = Array.isArray(parsedData.countries)
     ? parsedData.countries.map(c => [c.country || c.name, c.keywords])
     : Object.entries(parsedData.countries);
