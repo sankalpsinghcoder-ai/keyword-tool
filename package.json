@@ -1,0 +1,14 @@
+{
+  "name": "keyword-tool",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@google/genai": "^2.22.0",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1"
+  }
+}

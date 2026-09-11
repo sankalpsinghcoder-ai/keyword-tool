@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Global Keyword Research Engine</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen p-8">
+  <div class="max-w-5xl mx-auto">
+    <header class="mb-8 border-b border-slate-800 pb-4">
+      <h1 class="text-3xl font-bold text-sky-400">Global Keyword Engine</h1>
+      <p class="text-slate-400 mt-1">10 Targeted Markets • Live Google Demand Data • Plain Markdown Export</p>
+    </header>
+
+    <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-xl mb-8">
+      <label class="block text-sm font-semibold mb-2">Website / App Description</label>
+      <div class="flex gap-4">
+        <input id="nicheInput" type="text" placeholder="e.g. Free online web tools for PDF editing, image compressing, and text word counter" 
+               class="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-sky-500"/>
+        <button id="searchBtn" onclick="runResearch()" class="bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold px-6 py-3 rounded-lg transition-all">
+          Generate
+        </button>
+      </div>
+    </div>
+
+    <div id="loading" class="hidden text-center py-12">
+      <div class="animate-spin rounded-full h-12 w-12 border-4 border-sky-400 border-t-transparent mx-auto mb-4"></div>
+      <p class="text-slate-400 text-lg">Querying native terms and verifying live Google demand...</p>
+    </div>
+
+    <div id="resultsWrapper" class="hidden space-y-6">
+      <div class="flex justify-between items-center bg-slate-900 border border-slate-800 p-4 rounded-xl">
+        <div>
+          <h2 class="text-xl font-bold text-white">Target Summary</h2>
+          <p id="summaryText" class="text-sm text-slate-400 mt-1"></p>
+        </div>
+        <button onclick="downloadMarkdown()" class="bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold text-sm px-5 py-2.5 rounded-lg transition-all whitespace-nowrap">
+          Download .md
+        </button>
+      </div>
+
+      <div id="cardsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+    </div>
+  </div>
+
+  <script>
+    let globalPayload = null;
+
+    async function runResearch() {
+      const niche = document.getElementById('nicheInput').value;
+      if (!niche || !niche.trim()) return alert("Please enter a website description");
+
+      document.getElementById('loading').classList.remove('hidden');
+      document.getElementById('resultsWrapper').classList.add('hidden');
+
+      try {
+        const res = await fetch('/api/research', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ niche: niche.trim() })
+        });
+        
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+        if (!data.countries || !Array.isArray(data.countries)) {
+          throw new Error("Invalid response format received from server");
+        }
+
+        globalPayload = data;
+        renderCards(data);
+      } catch (err) {
+        alert("Error: " + err.message);
+      } finally {
+        document.getElementById('loading').classList.add('hidden');
+      }
+    }
+
+    function renderCards(data) {
+      document.getElementById('summaryText').textContent = data.website_summary || "";
+      const grid = document.getElementById('cardsGrid');
+      grid.innerHTML = '';
+
+      data.countries.forEach(c => {
+        let items = (c.keywords || []).map(k => `
+          <li class="flex justify-between items-center py-1.5 border-b border-slate-800/40 text-xs">
+            <span class="text-sky-300 font-mono">${k.keyword}</span>
+            <div class="flex items-center gap-2">
+              <span class="text-slate-300 font-semibold">${k.verified_volume}</span>
+              <span class="px-1.5 py-0.5 rounded text-[10px] ${
+                k.difficulty === 'High' ? 'bg-red-900/50 text-red-300' :
+                k.difficulty === 'Medium-High' ? 'bg-amber-900/50 text-amber-300' :
+                k.difficulty === 'Medium' ? 'bg-yellow-900/50 text-yellow-300' : 'bg-emerald-900/50 text-emerald-300'
+              }">${k.difficulty}</span>
+            </div>
+          </li>
+        `).join('');
+
+        grid.innerHTML += `
+          <div class="bg-slate-900 border border-slate-800 rounded-xl p-5">
+            <div class="flex justify-between items-center mb-3">
+              <h3 class="font-bold text-lg text-white">${c.country}</h3>
+              <span class="text-xs text-slate-400 bg-slate-800 px-2 py-1 rounded">${c.language}</span>
+            </div>
+            <ul class="space-y-1">${items}</ul>
+          </div>
+        `;
+      });
+
+      document.getElementById('resultsWrapper').classList.remove('hidden');
+    }
+
+    function downloadMarkdown() {
+      if (!globalPayload || !Array.isArray(globalPayload.countries)) return;
+      const inputNiche = document.getElementById('nicheInput').value;
+
+      let md = `# Website\n${inputNiche}\n\n`;
+      md += `## About\n${globalPayload.website_summary}\n\n---\n\n`;
+
+      globalPayload.countries.forEach(c => {
+        md += `# ${c.country} (${c.language})\n\n`;
+        (c.keywords || []).forEach(k => {
+          md += `${k.keyword} - ${k.verified_volume} (Difficulty: ${k.difficulty})\n`;
+        });
+        md += `\n`;
+      });
+
+      const blob = new Blob([md], { type: 'text/markdown' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'localized_keywords.md';
+      a.click();
+    }
+  </script>
+</body>
+</html>
